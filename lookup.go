@@ -64,14 +64,17 @@ func lookerUpper(lookupChan, writeChan chan string) {
 		select {
 		case domain := <-lookupChan:
 			domain = strings.TrimSpace(domain)
-			//clean domains that start with a dot for some reason?
-			if string(domain[0]) == "." {
-				domain = domain[1:]
-			}
-			ips, err := net.LookupIP(domain)
-			if err == nil && len(ips) > 0 {
-				conf.Wg.Add(1)
-				writeChan <- domain
+			if len(domain) > 1 {
+
+				//clean domains that start with a dot for some reason?
+				if string(domain[0]) == "." {
+					domain = domain[1:]
+				}
+				ips, err := net.LookupIP(domain)
+				if err == nil && len(ips) > 0 {
+					conf.Wg.Add(1)
+					writeChan <- domain
+				}
 			}
 		}
 		conf.Wg.Done()
