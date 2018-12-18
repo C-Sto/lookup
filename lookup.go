@@ -13,6 +13,7 @@ import (
 type config struct {
 	InputList string
 	Localpath string
+	IPs       bool
 	No6       bool
 	Threads   int
 	Wg        *sync.WaitGroup
@@ -24,7 +25,8 @@ func main() {
 
 	flag.StringVar(&conf.InputList, "iL", "", "File to use as an input list of domains to resolve")
 	flag.StringVar(&conf.Localpath, "o", "."+string(os.PathSeparator)+"resolved.txt", "Local file to dump successful resolves into (v6 resolves will go into a file with 6_ prepended)")
-	flag.BoolVar(&conf.No6, "no6", false, "Don't do v6 resolves")
+	flag.BoolVar(&conf.No6, "no6", false, "Don't do v6 resolves") //future :sunglasses:
+	flag.BoolVar(&conf.IPs, "ip", false, "Append resolved IP to looked up domain")
 	flag.IntVar(&conf.Threads, "t", 100, "Number of looker upper workers to use")
 	flag.Parse()
 
@@ -73,7 +75,11 @@ func lookerUpper(lookupChan, writeChan chan string) {
 				ips, err := net.LookupIP(domain)
 				if err == nil && len(ips) > 0 {
 					conf.Wg.Add(1)
-					writeChan <- domain
+					if conf.IPs {
+						writeChan <- domain + ":" + ips[0].String()
+					} else {
+						writeChan <- domain
+					}
 				}
 			}
 		}
